@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            background-color: #97869D;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen py-8 px-4 text-slate-900">
+    <div class="max-w-3xl mx-auto space-y-6">
+
+        <!-- Header -->
+        <div class="text-center space-y-2">
+            <div class="flex items-center justify-center gap-2">
+                <i data-lucide="file-text" class="h-8 w-8 text-white"></i>
+                <h1 class="text-3xl font-bold text-white">Text Summarizer</h1>
+            </div>
+        </div>
+
+        <!-- Input Card -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="p-6 border-b border-slate-100">
+                <h2 class="text-lg font-semibold leading-none tracking-tight">Input Text</h2>
+            </div>
+            <div class="p-6 space-y-4">
+                <textarea id="inputText" placeholder="Paste or type your text here..."
+                    class="flex min-h-[200px] w-full rounded-md border border-slate-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:cursor-not-allowed disabled:opacity-50 resize-none"></textarea>
+                <div class="flex gap-3">
+                    <button id="summarizeBtn" onclick="summarizeText()"
+                        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 bg-slate-900 text-slate-50 hover:bg-slate-900/90 h-9 px-4 py-2 gap-2">
+                        <i data-lucide="sparkles" class="h-4 w-4"></i>
+                        <span id="btnText">Summarize</span>
+                    </button>
+
+                    <button onclick="clearText()"
+                        class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-950 disabled:pointer-events-none disabled:opacity-50 hover:bg-slate-100 hover:text-slate-900 h-9 px-4 py-2">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div id="summaryCard" class="bg-white rounded-lg shadow-lg overflow-hidden hidden">
+            <div class="p-6 border-b border-slate-100">
+                <h2 class="text-lg font-semibold leading-none tracking-tight">Summaries</h2>
+            </div>
+            <div class="p-6 space-y-6">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Abstractive Summary</h3>
+                    <p id="abstractiveSummary" class="text-slate-900 leading-relaxed"></p>
+                </div>
+                <div class="pt-4 border-t border-slate-100">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Extractive Summary</h3>
+                    <p id="extractiveSummary" class="text-slate-900 leading-relaxed"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        async function summarizeText() {
+            const inputText = document.getElementById('inputText').value;
+            if (!inputText.trim()) return;
+
+            const btn = document.getElementById('summarizeBtn');
+            const btnText = document.getElementById('btnText');
+
+            // Loading State
+            btn.disabled = true;
+            const originalText = btnText.innerText;
+            btnText.innerText = 'Summarizing...';
+
+            try {
+                const response = await fetch('/summarize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text: inputText
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.abstractive || data.extractive) {
+                    document.getElementById('abstractiveSummary').innerText = data.abstractive || 'No abstractive summary generated.';
+                    document.getElementById('extractiveSummary').innerText = data.extractive || 'No extractive summary generated.';
+                    document.getElementById('summaryCard').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while summarizing.');
+            } finally {
+                // Reset State
+                btn.disabled = false;
+                btnText.innerText = originalText;
+            }
+        }
+
+        function clearText() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('summaryCard').classList.add('hidden');
+            document.getElementById('abstractiveSummary').innerText = '';
+            document.getElementById('extractiveSummary').innerText = '';
+        }
+    </script>
+</body>
+
+</html>
